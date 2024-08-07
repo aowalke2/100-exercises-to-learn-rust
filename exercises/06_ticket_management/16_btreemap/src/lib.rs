@@ -37,16 +37,6 @@ pub enum Status {
     Done,
 }
 
-impl IntoIterator for &TicketStore {
-    type Item = (TicketId, Ticket);
-
-    type IntoIter = std::collections::btree_map::IntoIter<TicketId, Ticket>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.tickets.clone().into_iter()
-    }
-}
-
 impl TicketStore {
     pub fn new() -> Self {
         Self {
@@ -105,6 +95,16 @@ impl IndexMut<&TicketId> for TicketStore {
     }
 }
 
+impl<'a> IntoIterator for &'a TicketStore {
+    type Item = &'a Ticket;
+
+    type IntoIter = std::collections::btree_map::Values<'a, TicketId, Ticket>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.tickets.values()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{Status, TicketDraft, TicketId, TicketStore};
@@ -134,7 +134,7 @@ mod tests {
             assert_eq!(ticket.status, Status::InProgress);
         }
 
-        let ids: Vec<TicketId> = (&store).into_iter().map(|t| t.0).collect();
+        let ids: Vec<TicketId> = (&store).into_iter().map(|t| t.id).collect();
         let sorted_ids = {
             let mut v = ids.clone();
             v.sort();
